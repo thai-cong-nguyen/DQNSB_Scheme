@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+import "google/protobuf/empty.proto";
+
+package elastico;
+
+// IDProof is a proof for identify
+
+message IDProof {
+    string IP = 1;
+    bytes PK = 2;
+    bytes CommitteeId = 3;
+    bytes PoW = 4;
+    bytes EpochRandomness = 5;
+    // is part of network or not
+    bool PartOfNtw = 6;
+}
+
+service SetupService {
+    rpc ReceiveIDProof (IDProof) returns (google.protobuf.Empty);
+}

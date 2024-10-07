@@ -1,21 +1,20 @@
 from subprocess import check_output
-from Crypto.PublicKey import RSA
-from Crypto.Signature import PKCS1_v1_5
-from Crypto.Hash import SHA256
+from Cryptodome.PublicKey import RSA
+from Cryptodome.Signature import PKCS1_v1_5
+from Cryptodome.Hash import SHA256
 from secrets import SystemRandom
 import socket, threading
-import random
 
 # network_nodes - All objects of nodes in the network
 global network_nodes, n, s, c, D, r, identityNodeMap, fin_num, commitmentSet, ledger, NtwParticipatingNodes
 # n : number of processors
-n = 150
+n = 300
 # s - where 2^s is the number of committees
 s = 4
 # c - size of committee
 c = 2
 # D - difficulty level , leading bits of PoW must have D 0's (keep w.r.t to hex)
-D = 1 
+D = 2
 # r - number of bits in random string 
 r = 5
 # fin_num - final committee id
@@ -33,51 +32,10 @@ network_nodes = []
 # ELASTICO_STATES - states reperesenting the running state of the node
 ELASTICO_STATES = {"NONE": 0, "PoW Computed": 1, "Formed Identity" : 2,"Formed Committee": 3, "RunAsDirectory": 4 ,"Receiving Committee Members" : 5,"Committee full" : 6 , "PBFT Finished" : 7, "Intra Consensus Result Sent to Final" : 8, "Final Committee in PBFT" : 9, "FinalBlockSent" : 10, "FinalBlockReceived" : 11, "RunAsDirectory after-TxnReceived" : 12, "RunAsDirectory after-TxnMulticast" : 13, "Final PBFT Start" : 14, "Merged Consensus Data" : 15, "PBFT Finished-FinalCommittee" : 16 , "CommitmentSentToFinal" : 17, "BroadcastedR" : 18, "ReceivedR" :  19, "FinalBlockSentToClient" : 20}
 
-# TODO:  State space: Capture real-time blockchain metrics such as shard transaction load, node computational power, block size, and network latency.
-
-class BlockchainState:
-    def __init__(self, transmission_rate, computing_capabilities, consensus_history):
-        self.transmission_rate = transmission_rate  # R(i,j) between nodes i and j
-        self.computing_capabilities = computing_capabilities  # Computing power of nodes
-        self.consensus_history = consensus_history  # H: Consensus validity history
-
-    def compute_malicious_node_probability(self):
-        # Compute p̄ (malicious node probability) based on consensus history (H)
-        trust = self.compute_network_trust()
-        return 1 - trust
-
-    def compute_network_trust(self):
-        # Normalize consensus history H and calculate trust level (binary encoding 1 = valid, 0 = invalid)
-        total_nodes = len(self.consensus_history)
-        valid_consensus_count = sum(self.consensus_history)
-        return valid_consensus_count / total_nodes
-
-
-# TODO: Action space: Incorporate actions that DQN can take, like adjusting block size, selecting which shard processes a transaction, and determining which nodes are involved in consensus.   
-
-class BlockchainActions:
-    def __init__(self, max_block_size, max_block_interval, max_shards):
-        self.max_block_size = max_block_size
-        self.max_block_interval = max_block_interval
-        self.max_shards = max_shards
-
-    def select_action(self):
-        # DQN selects block size, block interval, and number of shards
-        block_size = random.randint(1, self.max_block_size)
-        block_interval = random.randint(1, self.max_block_interval)
-        num_shards = random.randint(1, self.max_shards)
-        return block_size, block_interval, num_shards
-
-
-# TODO: Reward function: Provide a way to calculate rewards based on system performance metrics (throughput, latency, decentralization, and security). 
-
-def calculate_reward(block_size, block_interval, num_shards, tps, latency, security_constraints):
-    if latency <= block_interval and num_shards < security_constraints:
-        reward = (block_size - (block_interval * latency)) / block_size  # TPS maximization
-        return reward
-    else:
-        return 0  # If constraints are violated, no reward
-
+# class Network:
+# 	"""
+# 		class for networking between nodes
+# 	"""
 
 def consistencyProtocol():
     """
@@ -1030,32 +988,6 @@ class Elastico:
             return "reset"
 
 
-# Example integration into elastico_template.py
-def run__agent_in_epoch(agent, blockchain_state, blockchain_actions):
-    # Capture the current state
-    current_state = blockchain_state
-
-    # Agent selects an action
-    block_size, block_interval, num_shards = agent.select_action(current_state)
-
-    # Execute the action (adjust block size, interval, shard formation)
-    blockchain_actions.execute(block_size, block_interval, num_shards)
-
-    # Compute the reward based on throughput, latency, and security
-    tps = compute_throughput(block_size, block_interval, num_shards)
-    latency = compute_latency(block_interval)
-    security_constraints = get_security_constraints(num_shards)
-    
-    reward = calculate_reward(block_size, block_interval, num_shards, tps, latency, security_constraints)
-
-    # Update the DQN agent with the new experience
-    next_state = blockchain_state  # Update the state based on the new action
-    agent.store_experience(current_state, action, reward, next_state)
-    agent.optimize_model()
-
-    # Decay the exploration rate
-    agent.update_exploration_rate()
-
 def Run(epochTxn):
     """
         runs for one epoch
@@ -1069,8 +1001,6 @@ def Run(epochTxn):
 
     epochBlock = set()
     commitmentSet = set()
-
-    run__agent_in_epoch()
 
     while True:
         resetcount = 0
@@ -1100,18 +1030,18 @@ def Run(epochTxn):
     print("ledger block" , ledger)
     input("ledger updated!!")
 
-
 if __name__ == "__main__":
     # epochTxns - dictionary that maps the epoch number to the list of transactions
     epochTxns = dict()
-    for i in range(5):
+    for i in range(10000):
         # txns is the list of the transactions in one epoch to which the committees will agree on
         txns = []
         for j in range(200):
             random_num = random_gen(32)
             txns.append(random_num)
         epochTxns[i] = txns
-
     for epoch in epochTxns:
         print("epoch number :-" , epoch + 1 , "started")
         Run(epochTxns[epoch])
+
+
