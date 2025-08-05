@@ -262,7 +262,7 @@ func (m *MerkleTree) VerifyTree() (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	if bytes.Compare(m.merkleRoot, calculatedMerkleRoot) == 0 {
+	if bytes.Equal(m.merkleRoot, calculatedMerkleRoot) {
 		return true, nil
 	}
 	return false, nil
