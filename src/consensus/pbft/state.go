@@ -1,10 +1,12 @@
 package pbft
 
-type Mode int
+import "github.com/0xharryriddle/DQNSB_Scheme/src/node"
+
+type Mode int64
 
 const (
-	Normal     Mode = iota
-	ViewChange      //
+	Normal Mode = iota
+	ViewChange
 )
 
 type Consensus interface {
@@ -14,7 +16,7 @@ type Consensus interface {
 	Commit()
 }
 
-type State int
+type State int64
 
 const (
 	AcceptState State = iota
@@ -47,21 +49,21 @@ func (s State) String() string {
 type CommittedSeal struct {
 	Signature []byte
 
-	NodeID NodeID
+	NodeID node.NodeID
 }
 
 type SealedProposal struct {
 	// Proposal *Proposal
 	CommittedSeals []CommittedSeal
-	Proposer       NodeID
-	Number         int
+	Proposer       node.NodeID
+	Number         int64
 }
 
 type RoundInfo struct {
 	IsProposer   bool
-	Proposer     NodeID
+	Proposer     node.NodeID
 	Locked       bool
-	CurrentRound int
+	CurrentRound int64
 }
 
 type Pbft struct {
